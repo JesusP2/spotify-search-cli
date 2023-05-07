@@ -90,28 +90,76 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.textInputValue = m.textInput.Value()
 		case m.GetCurrentView() == SearchTypeView && key.Matches(msg, m.keymap.enter):
 			m.searchType = m.searchTypeList.Items()[m.searchTypeList.Index()].(Item).title
-			searchedItems := spotify.Search(m.textInputValue, m.searchType, m.spotify.AccessToken, &http.Client{})
 			m.searchResultsList.Title = "Search results for " + m.textInputValue
-			rows := []table.Row{}
-			for _, item := range searchedItems.Artists.Items {
-				rows = append(rows, table.Row{item.Name, fmt.Sprint(item.Popularity), strings.Join(item.Genres, ",  "), item.ExternalUrls.Spotify})
-			}
+			var rows []table.Row
 			var columns []table.Column
 			switch m.searchType {
 			case spotify.Artist:
+				searchedItems := spotify.SearchArtist(m.textInputValue, m.searchType, m.spotify.AccessToken, &http.Client{})
+				for _, item := range searchedItems.Artists.Items {
+					rows = append(rows, table.Row{item.Name, fmt.Sprint(item.Popularity), strings.Join(item.Genres, ",  "), item.ExternalUrls.Spotify})
+				}
 				columns = []table.Column{
-					{Title: "Name", Width: 10},
+					{Title: "Name", Width: 30},
 					{Title: "Popularity", Width: 10},
 					{Title: "Genres", Width: 30},
 					{Title: "Link", Width: 60},
 				}
+			case spotify.Album:
+				searchedItems := spotify.SearchAlbum(m.textInputValue, m.searchType, m.spotify.AccessToken, &http.Client{})
+				for _, item := range searchedItems.Albums.Items {
+					rows = append(rows, table.Row{item.Name, item.ReleaseDate, fmt.Sprint(item.TotalTracks), item.AlbumType, item.ExternalUrls.Spotify})
+				}
+				columns = []table.Column{
+					{Title: "Name", Width: 30},
+					{Title: "Release Date", Width: 10},
+					{Title: "Total Tracks", Width: 10},
+					{Title: "Album Type", Width: 10},
+					{Title: "Link", Width: 60},
+				}
+			case spotify.Track:
+				searchedItems := spotify.SearchTrack(m.textInputValue, m.searchType, m.spotify.AccessToken, &http.Client{})
+				for _, item := range searchedItems.Tracks.Items {
+					rows = append(rows, table.Row{item.Name, item.Album.Name, item.ExternalUrls.Spotify})
+				}
+				columns = []table.Column{
+					{Title: "Name", Width: 30},
+					{Title: "Album", Width: 10},
+					{Title: "Link", Width: 60},
+				}
 			}
-			m.searchResultsTable.SetColumns(columns)
-			m.searchResultsTable.SetRows(rows)
+			t := table.New(
+				table.WithFocused(true),
+				table.WithHeight(7),
+				table.WithColumns(columns),
+				table.WithRows(rows),
+			)
+
+			s := table.DefaultStyles()
+			s.Header = s.Header.
+				BorderStyle(lipgloss.NormalBorder()).
+				BorderForeground(lipgloss.Color("240")).
+				BorderBottom(true).
+				Bold(false)
+			s.Selected = s.Selected.
+				Foreground(lipgloss.Color("229")).
+				Background(lipgloss.Color("57")).
+				Bold(false)
+			t.SetStyles(s)
+			m.searchResultsTable = t
 		case m.GetCurrentView() == SearchResultsView && key.Matches(msg, m.keymap.enter):
 			index := m.searchResultsTable.Cursor()
 			item := m.searchResultsTable.Rows()[index]
-			err := exec.Command("xdg-open", item[3]).Start()
+			var linkIndex int
+			switch m.searchType {
+			case spotify.Artist:
+				linkIndex = 3
+			case spotify.Album:
+				linkIndex = 4
+			case spotify.Track:
+				linkIndex = 2
+			}
+			err := exec.Command("xdg-open", item[linkIndex]).Start()
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -167,7 +215,6 @@ func main() {
 	searchType := NewListModel("Search type", []list.Item{
 		Item{title: spotify.Artist, desc: spotify.Artist + " description"},
 		Item{title: spotify.Album, desc: spotify.Album + " description"},
-		Item{title: spotify.Playlist, desc: spotify.Playlist + " description"},
 		Item{title: spotify.Track, desc: spotify.Track + " description"},
 	})
 

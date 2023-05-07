@@ -38,20 +38,38 @@ type AlbumBody struct {
 	ReleaseDate  string       `json:"release_date"`
 	TotalTracks  int          `json:"total_tracks"`
 	AlbumType    string       `json:"album_type"`
-	ExtrenalUrls ExternalUrls `json:"external_urls"`
+	ExternalUrls ExternalUrls `json:"external_urls"`
 }
 
-type SearchBody struct {
+type TrackBody struct {
+	Id           string       `json:"id"`
+	Name         string       `json:"name"`
+	Album        AlbumBody    `json:"album"`
+	ExternalUrls ExternalUrls `json:"external_urls"`
+}
+
+type SearchTrackBody struct {
+	Tracks struct {
+		Items []TrackBody `json:"items"`
+	} `json:"tracks"`
+}
+
+type SearchAlbumBody struct {
+	Albums struct {
+		Items []AlbumBody `json:"items"`
+	} `json:"albums"`
+}
+
+type SearchArtistBody struct {
 	Artists struct {
 		Items []ArtistBody `json:"items"`
-	}
+	} `json:"artists"`
 }
 
 const (
-	Album    = "album"
-	Artist   = "artist"
-	Playlist = "playlist"
-	Track    = "track"
+	Album  = "album"
+	Artist = "artist"
+	Track  = "track"
 )
 
 func RequestSpotifyToken() SpotifyTokenRequest {
@@ -98,7 +116,37 @@ func RequestSpotifyToken() SpotifyTokenRequest {
 	return myBody
 }
 
-func Search(q string, searchType string, token string, c *http.Client) SearchBody {
+func SearchAlbum(q string, searchType string, token string, c *http.Client) SearchAlbumBody {
+	SearchBody := Search(q, searchType, token, c)
+	var myBody SearchAlbumBody
+	err := json.Unmarshal(SearchBody, &myBody)
+	if err != nil {
+		log.Fatal("Error parsing body:", err)
+	}
+	return myBody
+}
+
+func SearchTrack(q string, searchType string, token string, c *http.Client) SearchTrackBody {
+	SearchBody := Search(q, searchType, token, c)
+	var myBody SearchTrackBody
+	err := json.Unmarshal(SearchBody, &myBody)
+	if err != nil {
+		log.Fatal("Error parsing body:", err)
+	}
+	return myBody
+}
+
+func SearchArtist(q string, searchType string, token string, c *http.Client) SearchArtistBody {
+	SearchBody := Search(q, searchType, token, c)
+	var myBody SearchArtistBody
+	err := json.Unmarshal(SearchBody, &myBody)
+	if err != nil {
+		log.Fatal("Error parsing body:", err)
+	}
+	return myBody
+}
+
+func Search(q string, searchType string, token string, c *http.Client) []byte {
 	queryParams := url.Values{
 		"query":  []string{q},
 		"type":   []string{searchType},
@@ -123,9 +171,7 @@ func Search(q string, searchType string, token string, c *http.Client) SearchBod
 	}
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
-	var ArtistBody SearchBody
-	err = json.Unmarshal(body, &ArtistBody)
-	return ArtistBody
+	return body
 }
 
 func GetArtistData(id string, token string, c *http.Client) {
