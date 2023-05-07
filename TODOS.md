@@ -1,6 +1,6 @@
-- Move results from table to list
-- Create a better way to move between views
-- Create 1 help per view?
+- [x] Move results from table to list
+- [x] Create a better way to move between views
+- [x] Create 1 help per view?
 - Use generics for the results ?
 - refresh access_token if it expires
 - generiks generiks generiks

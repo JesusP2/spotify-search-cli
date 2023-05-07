@@ -20,14 +20,25 @@ type SpotifyTokenRequest struct {
 	Expires     int    `json:"expires"`
 }
 
+type ExternalUrls struct {
+	Spotify string `json:"spotify"`
+}
+
 type ArtistBody struct {
-	Id           string   `json:"id"`
-	Genres       []string `json:"genres"`
-	Name         string   `json:"name"`
-	Popularity   int      `json:"popularity"`
-	ExternalUrls struct {
-		Spotify string `json:"spotify"`
-	}
+	Id           string       `json:"id"`
+	Genres       []string     `json:"genres"`
+	Name         string       `json:"name"`
+	Popularity   int          `json:"popularity"`
+	ExternalUrls ExternalUrls `json:"external_urls"`
+}
+
+type AlbumBody struct {
+	Id           string       `json:"id"`
+	Name         string       `json:"name"`
+	ReleaseDate  string       `json:"release_date"`
+	TotalTracks  int          `json:"total_tracks"`
+	AlbumType    string       `json:"album_type"`
+	ExtrenalUrls ExternalUrls `json:"external_urls"`
 }
 
 type SearchBody struct {
