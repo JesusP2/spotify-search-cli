@@ -7,8 +7,11 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 type SpotifyTokenRequest struct {
@@ -41,8 +44,9 @@ const (
 )
 
 func RequestSpotifyToken() SpotifyTokenRequest {
-	client_id := "52bc59d14b7f4ee098a9b52fe67ec0d5"
-	client_secret := "57317954d2e543e4b643ff493c274fc5"
+	godotenv.Load(".env")
+	client_id := os.Getenv("CLIENT_ID")
+	client_secret := os.Getenv("CLIENT_SECRET")
 
 	data := url.Values{
 		"grant_type":    []string{"client_credentials"},
